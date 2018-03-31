@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.workable.cofeeorder.order.OrderRegistry
 import com.workable.cofeeorder.user.OrderUser
 import com.workable.cofeeorder.user.UserRegistry
@@ -44,7 +45,7 @@ class OrderActivity : AppCompatActivity() {
 
     orderUsersRef
         .document(orderUser.documentId)
-        .set(orderUser.toFirestoreMap())
+        .set(orderUser.toFirestoreMap(), SetOptions.merge())
         .addOnSuccessListener {
           Log.d(TAG, "User updated")
         }

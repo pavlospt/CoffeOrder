@@ -10,6 +10,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
+import com.google.firebase.iid.FirebaseInstanceId
 import com.workable.cofeeorder.user.toOrderUser
 import kotlinx.android.synthetic.main.activity_sign_in.sign_in_button
 
@@ -65,7 +66,8 @@ class SignInActivity : AppCompatActivity() {
   }
 
   private fun navigateToOrderScreen(googleSignInAccount: GoogleSignInAccount) {
-    val orderUser = googleSignInAccount.toOrderUser()
+    val notificationToken = FirebaseInstanceId.getInstance().token
+    val orderUser = googleSignInAccount.toOrderUser().copy(notificationToken = notificationToken)
     OrderActivity.startScreen(this, orderUser)
   }
 
