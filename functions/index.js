@@ -8,10 +8,10 @@ const orderStatusUpdatedAtKey = 'order_status_updated_at';
 
 const ORDER_USERS_COLLECTION = 'order-users';
 const ORDER_USERS_NOTIFICATION_TOKEN = 'notification_token';
-
 const ORDER_IS_OPEN_KEY = 'order_is_open';
 
-const ESPRESSO_ICON_URL = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhCSGSdGsu_J0Ic70vaTrbtGjZNl2t4xNqi1y1XP64MHHwe5bH';
+const ORDER_OPEN_NOTIFICATION_ACTION = 'order_opened';
+const ORDER_CLOSED_NOTIFICATION_ACTION = 'order_closeded';
 
 admin.initializeApp(functions.config().firebase);
 
@@ -64,10 +64,8 @@ exports.updateOrderStatusTimestamp = functions.firestore.document(orderStatusDoc
             console.log("Promise all", orderUsersWithToken, updatedTimestampResponse);
 
             const payload = {
-                notification: {
-                    title: 'It is coffee time!',
-                    body: 'Open the app to order your favorite coffee!',
-                    icon: ESPRESSO_ICON_URL,
+                data: {
+                    action: ORDER_OPEN_NOTIFICATION_ACTION
                 }
             };
 
