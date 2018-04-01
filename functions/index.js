@@ -52,7 +52,7 @@ exports.updateOrderStatusTimestamp = functions.firestore.document(orderStatusDoc
         }
 
         const updatedTimestampPromise = event.data.ref.set({
-            orderStatusUpdatedAtKey: admin.firestore.FieldValue.serverTimestamp()
+            order_status_updated_at: admin.firestore.FieldValue.serverTimestamp()
         }, {
             merge: true
         });
