@@ -7,13 +7,13 @@ import java.util.Date
 
 data class Order(
     val orderStatus: Boolean,
-    val orderStatusUpdatedAt: Date?,
+    val orderStatusUpdatedAt: String?,
     val orderOwner: String?
 )
 
 fun DocumentSnapshot.toOrder() = Order(
     this.data[OrderRegistry.FirestoreProps.ORDER_IS_OPEN] as Boolean,
-    this.data[OrderRegistry.FirestoreProps.ORDER_STATUS_UPDATED_AT] as Date,
+    this.data[OrderRegistry.FirestoreProps.ORDER_STATUS_UPDATED_AT] as? String,
     this.data[OrderRegistry.FirestoreProps.ORDER_OWNER] as? String
 )
 
