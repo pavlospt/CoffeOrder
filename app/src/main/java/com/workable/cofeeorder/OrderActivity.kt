@@ -81,10 +81,6 @@ class OrderActivity : AppCompatActivity() {
 
           documentSnapshot ?: return@addSnapshotListener
 
-          if (documentSnapshot.metadata.hasPendingWrites()) {
-            return@addSnapshotListener
-          }
-
           if (documentSnapshot.exists()) {
             val order = documentSnapshot.toOrder()
             updateUIForOrder(order)
