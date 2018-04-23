@@ -17,7 +17,7 @@ export const db = admin.firestore();
 
 export const updateOrderStatusTimestamp = functions.firestore
   .document(ORDER_STATUS_DOCUMENT)
-  .onUpdate((change, context) => {
+  .onUpdate(async (change, context) => {
     const previousStatus = change.before.data();
     const updatedStatus = change.after.data();
 
@@ -32,30 +32,24 @@ export const updateOrderStatusTimestamp = functions.firestore
         previousOrderIsOpen,
         updatedOrderIsOpen
       );
-      return Promise.resolve();
+      return null;
     }
 
     if (!updatedOrderIsOpen) {
       console.log("Updated order_is_open is not true", updatedOrderIsOpen);
-      return Promise.resolve();
+      return null;
     }
 
-    const tokensPromise = db
-      .collection(ORDER_USERS_COLLECTION)
-      .get()
-      .then(snap => {
-        const docsWithToken = [];
-        snap.forEach(doc => {
-          const data = doc.data();
-          if (data[ORDER_USERS_NOTIFICATION_TOKEN]) {
-            docsWithToken.push(data);
-          }
-        });
-        return docsWithToken;
-      })
-      .catch(console.log);
+    const snap = await db.collection(ORDER_USERS_COLLECTION).get();
+    const docsWithToken = [];
+    snap.forEach(doc => {
+      const data = doc.data();
+      if (data[ORDER_USERS_NOTIFICATION_TOKEN]) {
+        docsWithToken.push(data);
+      }
+    });
 
-    const updatedTimestampPromise = change.after.ref.set(
+    const updatedTimestamp = await change.after.ref.set(
       {
         order_status_updated_at: admin.firestore.FieldValue.serverTimestamp()
       },
@@ -64,46 +58,38 @@ export const updateOrderStatusTimestamp = functions.firestore
       }
     );
 
-    return updatedTimestampPromise
-      .then(() => tokensPromise)
-      .then(usersWithTokens => {
-        const orderUsersWithToken = usersWithTokens || [];
+    if (!docsWithToken || docsWithToken.length === 0) {
+      console.log("No user docs with token:" + docsWithToken);
+      return;
+    }
 
-        console.log("Users With Tokens", orderUsersWithToken);
+    const tokens = docsWithToken.map(user => user.notification_token);
+    const payload = {
+      data: {
+        action: ORDER_OPEN_NOTIFICATION_ACTION
+      }
+    };
 
-        if (!orderUsersWithToken || orderUsersWithToken.length === 0) {
-          return Promise.reject(orderUsersWithToken);
-        }
-
-        const tokens = orderUsersWithToken.map(user => user.notification_token);
-        const payload = {
-          data: {
-            action: ORDER_OPEN_NOTIFICATION_ACTION
+    const notificationRes = await admin
+      .messaging()
+      .sendToDevice(tokens, payload);
+      
+    const tokensToRemove = notificationRes.results
+      .map((result, index) => {
+        const error = result.error;
+        if (error) {
+          console.error(
+            "Failure sending notification to",
+            tokens[index],
+            error
+          );
+          if (
+            error.code === "messaging/invalid-registration-token" ||
+            error.code === "messaging/registration-token-not-registered"
+          ) {
+            return tokens[index];
           }
-        };
-
-        return admin
-          .messaging()
-          .sendToDevice(tokens, payload)
-          .then(messagingResponse => {
-            const tokensToRemove = messagingResponse.results
-              .map((result, index) => {
-                const error = result.error;
-                if (error) {
-                  console.error(
-                    "Failure sending notification to",
-                    tokens[index],
-                    error
-                  );
-                  if (
-                    error.code === "messaging/invalid-registration-token" ||
-                    error.code === "messaging/registration-token-not-registered"
-                  ) {
-                    tokensToRemove.push(tokens[index]);
-                  }
-                }
-              })
-              .filter(token => token);
-          });
-      });
+        }
+      })
+      .filter(token => token);
   });
