@@ -37,6 +37,15 @@ export const updateOrderStatusTimestamp = functions.firestore
 
     if (!updatedOrderIsOpen) {
       console.log("Updated order_is_open is not true", updatedOrderIsOpen);
+      await change.after.ref.set(
+        {
+          order_status_updated_at: admin.firestore.FieldValue.serverTimestamp(),
+          order_owner: null
+        },
+        {
+          merge: true
+        }
+      );
       return null;
     }
 
@@ -49,7 +58,7 @@ export const updateOrderStatusTimestamp = functions.firestore
       }
     });
 
-    const updatedTimestamp = await change.after.ref.set(
+    await change.after.ref.set(
       {
         order_status_updated_at: admin.firestore.FieldValue.serverTimestamp()
       },
@@ -73,7 +82,7 @@ export const updateOrderStatusTimestamp = functions.firestore
     const notificationRes = await admin
       .messaging()
       .sendToDevice(tokens, payload);
-      
+
     const tokensToRemove = notificationRes.results
       .map((result, index) => {
         const error = result.error;

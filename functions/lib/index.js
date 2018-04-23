@@ -27,6 +27,12 @@ exports.updateOrderStatusTimestamp = functions.firestore
     }
     if (!updatedOrderIsOpen) {
         console.log("Updated order_is_open is not true", updatedOrderIsOpen);
+        yield change.after.ref.set({
+            order_status_updated_at: admin.firestore.FieldValue.serverTimestamp(),
+            order_owner: null
+        }, {
+            merge: true
+        });
         return null;
     }
     const snap = yield exports.db.collection(constants_1.ORDER_USERS_COLLECTION).get();
@@ -37,7 +43,7 @@ exports.updateOrderStatusTimestamp = functions.firestore
             docsWithToken.push(data);
         }
     });
-    const updatedTimestamp = yield change.after.ref.set({
+    yield change.after.ref.set({
         order_status_updated_at: admin.firestore.FieldValue.serverTimestamp()
     }, {
         merge: true
